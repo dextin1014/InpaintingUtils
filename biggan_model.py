@@ -31,7 +31,7 @@ def biggan_residual_block(inputs, ch, downsampling, use_normalize):
     return layers.Add()([x, r])
 
 def image_to_image_generator():
-    inputs = layers.Input((64, 64, 3))
+    inputs = layers.Input((256, 256, 3))
     x = inputs
     encoders = []
     for ch in [64, 128, 256]:
@@ -42,13 +42,13 @@ def image_to_image_generator():
     for d in [1, 1, 2, 2]:
         x = ConvSN2D(512, 3, padding="same", dilation_rate=d)(x)
         x = InstanceNorm2D()(x)
-        x = layers.ReLU()(x) # (8, 8, 512)
+        x = layers.ReLU()(x) # (32, 32, 512)
     x = layers.Concatenate()([x, encoders[-1]])
-    x = biggan_residual_block(x, 256, -2, True)  # (16, 16, 256)
+    x = biggan_residual_block(x, 256, -2, True)  # (64, 64, 256)
     x = layers.Concatenate()([x, encoders[-2]])
-    x = biggan_residual_block(x, 128, -2, True)  # (32, 32, 128)
+    x = biggan_residual_block(x, 128, -2, True)  # (128, 128, 128)
     x = layers.Concatenate()([x, encoders[-3]])
-    x = biggan_residual_block(x, 64, -2, True)  # (64, 64, 64)
+    x = biggan_residual_block(x, 64, -2, True)  # (256, 256, 64)
     x = InstanceNorm2D()(x)
     x = layers.ReLU()(x)
     x = ConvSN2D(3, 3, padding="same", activation="tanh")(x)
@@ -56,10 +56,10 @@ def image_to_image_generator():
     return model
 
 def discriminator():
-    inputs = layers.Input((64, 64, 3))
-    x = biggan_residual_block(inputs, 128, 2, False) # (32, 32, 128)
-    x = biggan_residual_block(x, 256, 2, False)  # (16, 16, 256)
-    x = biggan_residual_block(x, 512, 2, False)  # (8, 8, 512)
+    inputs = layers.Input((256, 256, 3))
+    x = biggan_residual_block(inputs, 128, 2, False) # (128, 128, 128)
+    x = biggan_residual_block(x, 256, 2, False)  # (64, 64, 256)
+    x = biggan_residual_block(x, 512, 2, False)  # (32, 32, 512)
     x = biggan_residual_block(x, 512, 1, False)
     x = layers.ReLU()(x)
     x = ConvSN2D(1, 1)(x)
